@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>JJRadio · Neon</title>
+  <meta name="description" content="JJRadio – non-stop muziek + jingles, helemaal op GitHub Pages." />
+  <style>
+    :root{
+      --bg:#0b0f14;            /* diep donkerblauw */
+      --panel:#0f1722;         /* kaartkleur */
+      --text:#e6f0ff;          /* tekstkleur */
+      --muted:#9bb0d0;         /* secundaire tekst */
+      --neon1:#00f5ff;         /* cyaan neon */
+      --neon2:#ff00e6;         /* magenta neon */
+      --neon3:#9dff00;         /* lime neon */
+      --accent:#4ee3ff;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; background:radial-gradient(1200px 800px at 10% 10%, #0f1624 0%, #0b0f14 60%, #070a0f 100%);
+      color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,"Noto Sans",sans-serif;
+      letter-spacing:.2px;
+      display:flex; align-items:center; justify-content:center; padding:24px;
+      overflow-x:hidden;
+    }
+
+    /* Neon strips */
+    .neon-strip{position:fixed; left:0; right:0; height:10px; z-index:0; filter:blur(0.3px)}
+    .neon-top{top:0; background:linear-gradient(90deg,var(--neon1),var(--neon2),var(--neon3),var(--neon1)); background-size:200% 100%; animation:scrollX 8s linear infinite}
+    .neon-bottom{bottom:0; background:linear-gradient(90deg,var(--neon2),var(--neon3),var(--neon1),var(--neon2)); background-size:200% 100%; animation:scrollX 10s linear infinite reverse}
+    @keyframes scrollX{0%{background-position:0 0}100%{background-position:200% 0}}
+
+    .wrap{position:relative; z-index:1; width:min(980px, 100%);}
+
+    .card{
+      background:linear-gradient(180deg, rgba(78,227,255,0.08) 0%, rgba(255,0,230,0.06) 100%), var(--panel);
+      border:1px solid rgba(78,227,255,.18);
+      border-radius:24px; box-shadow:0 20px 60px rgba(0,0,0,.6), 0 0 60px rgba(78,227,255,.1) inset;
+      padding:28px; backdrop-filter: blur(6px);
+    }
+
+    .title{
+      display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+      margin-bottom:16px;
+    }
+    .logo{
+      width:42px; height:42px; border-radius:12px; background:radial-gradient(circle at 30% 30%, var(--neon1), transparent 60%),
+                                       radial-gradient(circle at 70% 70%, var(--neon2), transparent 60%),
+                                       linear-gradient(145deg, #0b1320, #05070b);
+      border:1px solid rgba(255,255,255,.08);
+      box-shadow:0 0 14px rgba(78,227,255,.5), 0 0 24px rgba(255,0,230,.2) inset;
+    }
+    h1{margin:0; font-size:clamp(22px, 4vw, 34px); letter-spacing:.6px}
+    .tag{font-size:12px; padding:4px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.14); color:var(--muted)}
+
+    .controls{
+      display:grid; grid-template-columns:1fr; gap:14px; margin-top:10px;
+    }
+    @media(min-width:720px){
+      .controls{grid-template-columns: 1.2fr .8fr}
+    }
+
+    .pane{background:rgba(11,17,27,.7); border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:16px}
+
+    button.primary{
+      width:100%; padding:16px 18px; border-radius:14px; font-weight:700; font-size:16px;
+      background:linear-gradient(90deg, rgba(0,245,255,.12), rgba(255,0,230,.12));
+      border:1px solid rgba(78,227,255,.5); color:var(--text);
+      text-shadow:0 0 8px rgba(78,227,255,.5);
+      box-shadow:0 0 18px rgba(78,227,255,.25), inset 0 0 24px rgba(255,0,230,.08);
+      cursor:pointer; transition:transform .06s ease, box-shadow .2s ease, background .2s ease; backdrop-filter: blur(2px);
+    }
+    button.primary:hover{transform:translateY(-1px); box-shadow:0 0 22px rgba(78,227,255,.35), inset 0 0 30px rgba(255,0,230,.10)}
+    button.primary:active{transform:translateY(0)}
+
+    .minor{
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap; opacity:.9; font-size:14px;
+    }
+
+    .row{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+    .grow{flex:1}
+    .label{font-size:12px; color:var(--muted)}
+
+    input[type="range"]{width:100%}
+
+    .now{
+      display:flex; align-items:center; gap:12px; margin:8px 0 2px 0; min-height:26px;
+      font-weight:600; letter-spacing:.3px;
+    }
+    .pill{font-size:11px; padding:3px 8px; border-radius:999px; background:rgba(78,227,255,.15); border:1px solid rgba(78,227,255,.35); color:#c7f6ff}
+
+    .list{max-height:220px; overflow:auto; margin-top:8px; padding-right:6px}
+    .list::-webkit-scrollbar{width:8px}
+    .list::-webkit-scrollbar-thumb{background:linear-gradient(var(--neon1), var(--neon2)); border-radius:8px}
+
+    .item{display:flex; align-items:center; gap:10px; padding:8px 4px; border-bottom:1px dashed rgba(255,255,255,.06)}
+    .item .time{font-size:11px; color:var(--muted); width:76px}
+    .item .name{font-size:14px; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+
+    .hint{font-size:12px; color:var(--muted); margin-top:10px}
+    .blink{animation:blink 1.1s steps(2,end) infinite}
+    @keyframes blink{50%{opacity:.3}}
+
+    .footer{margin-top:16px; display:flex; justify-content:space-between; align-items:center; gap:8px; color:var(--muted); font-size:12px}
+    .links a{color:var(--accent); text-decoration:none}
+  </style>
+</head>
+<body>
+  <div class="neon-strip neon-top"></div>
+  <div class="neon-strip neon-bottom"></div>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="title">
+        <div class="logo" aria-hidden="true"></div>
+        <h1>JJRadio</h1>
+        <span class="tag">Neon Live Stream • GitHub Pages</span>
+      </div>
+
+      <div class="controls">
+        <div class="pane">
+          <div class="now">
+            <span class="pill" id="now-type">—</span>
+            <span id="now-title">Klaar om te starten…</span>
+          </div>
+          <button id="playBtn" class="primary">Druk hier om radio aan te zetten.</button>
+          <div class="minor" style="margin-top:10px">
+            <div class="row grow">
+              <div class="label">Volume</div>
+              <input id="vol" type="range" min="0" max="1" step="0.01" value="0.9" />
+            </div>
+            <button id="skipBtn" class="primary" style="padding:10px 14px; font-size:14px; width:auto">Skip ▷▷</button>
+          </div>
+          <div class="hint">Tip: Laat dit tabblad open voor non-stop radio. Nummers hebben een <b>10 min</b> cooldown zodat je niet 2× hetzelfde achter elkaar krijgt.</div>
+        </div>
+
+        <div class="pane">
+          <div class="row" style="justify-content:space-between; margin-bottom:6px">
+            <div class="label">Afgespeeld (recent → oud)</div>
+            <div class="label">Cooldown: <span id="cooldownCount">0</span> / <span id="totalCount">0</span></div>
+          </div>
+          <div class="list" id="history"></div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div>Repo: <code>JJR</code> · Mappen: <code>Music/</code> &amp; <code>Jingles/</code></div>
+        <div class="links">by <strong>JJRadio</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audio element (onzichtbaar) -->
+  <audio id="player" preload="auto"></audio>
+
+  <script>
+    /*
+     * =====================
+     *  JJRadio – instellingen
+     * =====================
+     * Zet je MP3-bestanden in de mappen: Music/ en Jingles/
+     * Vul hieronder exact de bestandsnamen in (alleen de naam, geen map); paden worden automatisch toegevoegd.
+     * Voorbeeld: plaats Music/Track01.mp3 → zet "Track01.mp3" in MUSIC_FILES.
+     */
+
+    const MUSIC_DIR = "Music/";
+    const JINGLE_DIR = "Jingles/";
+
+    // ▼▼ VUL JE BESTANDEN IN (voorbeeldnamen staan klaar). Minimaal ~15 tracks is mooi.
+    const MUSIC_FILES = [
+      // Voorbeeld – vervang door jouw 15+ bestanden
+      "Track01.mp3", "Track02.mp3", "Track03.mp3", "Track04.mp3", "Track05.mp3",
+      "Track06.mp3", "Track07.mp3", "Track08.mp3", "Track09.mp3", "Track10.mp3",
+      "Track11.mp3", "Track12.mp3", "Track13.mp3", "Track14.mp3", "Track15.mp3"
+    ];
+
+    const JINGLE_FILES = [
+      // Precies 2 of meer, maar jij zei 2 jingles – prima!
+      "JingleA.mp3", "JingleB.mp3"
+    ];
+
+    // Cooldown tussen hetzelfde nummer opnieuw spelen (in milliseconden)
+    const COOLDOWN_MS = 10 * 60 * 1000; // 10 minuten
+
+    // ===================== / einde instellingen =====================
+
+    const state = {
+      isPlaying: false,
+      jingleTurn: true, // start altijd met jingle
+      lastWasJingle: false,
+      lastJingle: null,
+      lastPlayedMap: loadLastPlayed(), // {"Music/Track01.mp3": timestamp}
+      history: [] // {when:number, type:"jingle"|"music", name:string}
+    };
+
+    const el = {
+      player: document.getElementById('player'),
+      playBtn: document.getElementById('playBtn'),
+      skipBtn: document.getElementById('skipBtn'),
+      vol: document.getElementById('vol'),
+      nowType: document.getElementById('now-type'),
+      nowTitle: document.getElementById('now-title'),
+      history: document.getElementById('history'),
+      cooldownCount: document.getElementById('cooldownCount'),
+      totalCount: document.getElementById('totalCount')
+    };
+
+    // init counts
+    el.totalCount.textContent = MUSIC_FILES.length.toString();
+
+    // Volume
+    el.player.volume = parseFloat(el.vol.value || '0.9');
+    el.vol.addEventListener('input', () => { el.player.volume = parseFloat(el.vol.value); saveVolume(); });
+
+    // Play/pause/skip
+    el.playBtn.addEventListener('click', async () => {
+      if(!state.isPlaying){
+        state.isPlaying = true;
+        el.playBtn.innerHTML = 'Pauzeren ⏸';
+        if(el.player.paused){
+          // Start met jingle → daarna muziek → enzovoort
+          await playNext();
+        } else {
+          el.player.play().catch(() => {});
+        }
+      } else {
+        state.isPlaying = false;
+        el.playBtn.innerHTML = 'Verder spelen ▶';
+        el.nowType.classList.add('blink');
+        el.player.pause();
+      }
+    });
+
+    el.skipBtn.addEventListener('click', async () => {
+      if(!state.isPlaying){
+        state.isPlaying = true;
+        el.playBtn.innerHTML = 'Pauzeren ⏸';
+      }
+      await playNext(true);
+    });
+
+    // Audio events
+    el.player.addEventListener('ended', async () => {
+      if(!state.isPlaying) return;
+      // Wissel beurt
+      state.jingleTurn = !state.jingleTurn;
+      await playNext();
+    });
+
+    el.player.addEventListener('error', async () => {
+      console.warn('Fout bij laden/afspelen, skip naar volgende.');
+      if(!state.isPlaying) return;
+      await playNext(true);
+    });
+
+    // Restore volume preference
+    (function restoreVolume(){
+      try{ const v = localStorage.getItem('jjradio_vol'); if(v!==null){ el.player.volume = parseFloat(v); el.vol.value = v; } }catch(e){}
+    })();
+
+    function saveVolume(){
+      try{ localStorage.setItem('jjradio_vol', String(el.player.volume)); }catch(e){}
+    }
+
+    function loadLastPlayed(){
+      try{ const raw = localStorage.getItem('jjradio_lastPlayed'); return raw? JSON.parse(raw) : {}; }catch(e){ return {}; }
+    }
+    function saveLastPlayed(){
+      try{ localStorage.setItem('jjradio_lastPlayed', JSON.stringify(state.lastPlayedMap)); }catch(e){}
+    }
+
+    function niceName(file){
+      return file.replace(/\.[^.]+$/, '') // drop ext
+                 .replace(/[._-]+/g, ' ')   // separators → spaties
+                 .replace(/\b([a-z])/g, m => m.toUpperCase()); // hoofdletters
+    }
+
+    function addHistory(type, file){
+      const name = niceName(file);
+      state.history.unshift({ when: Date.now(), type, name });
+      // Limit zichtbare history
+      if(state.history.length > 60) state.history.length = 60;
+      renderHistory();
+    }
+
+    function renderHistory(){
+      const fmt = t => new Date(t).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      el.history.innerHTML = state.history.map(item => `
+        <div class="item">
+          <div class="time">${fmt(item.when)}</div>
+          <div class="name">${item.type === 'jingle' ? '🔊 Jingle' : '🎵 Muziek'} — ${item.name}</div>
+        </div>
+      `).join('');
+
+      // Update cooldown teller
+      const now = Date.now();
+      const inCd = MUSIC_FILES.filter(f => {
+        const p = MUSIC_DIR + f;
+        return state.lastPlayedMap[p] && (now - state.lastPlayedMap[p] < COOLDOWN_MS);
+      }).length;
+      el.cooldownCount.textContent = String(inCd);
+    }
+
+    async function playNext(force=false){
+      // Kies wat we gaan spelen
+      const type = state.jingleTurn ? 'jingle' : 'music';
+      const src = (type === 'jingle') ? pickJingle() : pickMusic();
+      if(!src){
+        // Als er niets te vinden is, flip en probeer andersom
+        state.jingleTurn = !state.jingleTurn;
+        const src2 = state.jingleTurn ? pickJingle() : pickMusic();
+        if(!src2){return}
+        await playSrc(src2, state.jingleTurn ? 'jingle' : 'music');
+        return;
+      }
+      await playSrc(src, type);
+    }
+
+    async function playSrc(src, type){
+      el.player.src = src;
+      el.nowType.classList.remove('blink');
+      el.nowType.textContent = type === 'jingle' ? 'Jingle' : 'Muziek';
+      el.nowTitle.textContent = niceName(src.split('/').pop());
+
+      if(type === 'music'){
+        // markeer direct als gespeeld voor cooldown
+        state.lastPlayedMap[src] = Date.now();
+        saveLastPlayed();
+      }
+      addHistory(type, src.split('/').pop());
+
+      try{
+        await el.player.play();
+        // klaar; next wordt door 'ended' event geregeld
+      }catch(err){
+        console.warn('Autoplay geblokkeerd of fout:', err);
+        // Toon hint om te klikken
+        el.playBtn.innerHTML = 'Klik om verder te spelen ▶';
+        state.isPlaying = false;
+      }
+    }
+
+    function pickJingle(){
+      if(!JINGLE_FILES.length) return null;
+      // Vermijd dezelfde jingle 2× achter elkaar
+      let choices = JINGLE_FILES.slice();
+      if(state.lastJingle && choices.length > 1){
+        choices = choices.filter(j => j !== state.lastJingle);
+      }
+      const file = sample(choices);
+      state.lastJingle = file;
+      return JINGLE_DIR + file;
+    }
+
+    function pickMusic(){
+      if(!MUSIC_FILES.length) return null;
+      const now = Date.now();
+      const available = MUSIC_FILES.filter(f => {
+        const path = MUSIC_DIR + f;
+        const last = state.lastPlayedMap[path] || 0;
+        return (now - last) >= COOLDOWN_MS;
+      });
+
+      if(available.length > 0){
+        return MUSIC_DIR + sample(available);
+      }
+
+      // Alles in cooldown → pak de oudste (minst recent gespeeld)
+      let oldest = null; let oldestTime = Infinity;
+      for(const f of MUSIC_FILES){
+        const path = MUSIC_DIR + f;
+        const last = state.lastPlayedMap[path] || 0;
+        if(last < oldestTime){ oldestTime = last; oldest = f; }
+      }
+      return oldest ? MUSIC_DIR + oldest : null;
+    }
+
+    function sample(arr){ return arr[Math.floor(Math.random() * arr.length)] }
+  </script>
+</body>
+</html>
